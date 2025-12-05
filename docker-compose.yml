@@ -101,9 +101,20 @@ services:
   demo:
     image: python:3.11-slim
     volumes:
-      - ./demo.py:/app/demo.py
+      - .:/app
     working_dir: /app
     command: sh -c "pip install redis --quiet && python demo.py"
+    depends_on:
+      - redis-cluster-init
+    networks:
+      - redis-cluster
+
+  clear-redis:
+    image: python:3.11-slim
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "pip install redis --quiet && python clear_redis.py"
     depends_on:
       - redis-cluster-init
     networks:
