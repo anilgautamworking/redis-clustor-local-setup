@@ -1,0 +1,126 @@
+services:
+  redis-node-1:
+    image: redis:7.2-alpine
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass bitnami --masterauth bitnami
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-1:/data
+    networks:
+      redis-cluster:
+        ipv4_address: 172.28.0.2
+
+  redis-node-2:
+    image: redis:7.2-alpine
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass bitnami --masterauth bitnami
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data-2:/data
+    networks:
+      redis-cluster:
+        ipv4_address: 172.28.0.3
+
+  redis-node-3:
+    image: redis:7.2-alpine
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass bitnami --masterauth bitnami
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis-data-3:/data
+    networks:
+      redis-cluster:
+        ipv4_address: 172.28.0.4
+
+  redis-node-4:
+    image: redis:7.2-alpine
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass bitnami --masterauth bitnami
+    ports:
+      - "6382:6379"
+    volumes:
+      - redis-data-4:/data
+    networks:
+      redis-cluster:
+        ipv4_address: 172.28.0.5
+
+  redis-node-5:
+    image: redis:7.2-alpine
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass bitnami --masterauth bitnami
+    ports:
+      - "6383:6379"
+    volumes:
+      - redis-data-5:/data
+    networks:
+      redis-cluster:
+        ipv4_address: 172.28.0.6
+
+  redis-node-6:
+    image: redis:7.2-alpine
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass bitnami --masterauth bitnami
+    ports:
+      - "6384:6379"
+    volumes:
+      - redis-data-6:/data
+    networks:
+      redis-cluster:
+        ipv4_address: 172.28.0.7
+
+  redis-cluster-init:
+    image: redis:7.2-alpine
+    command: >
+      sh -c "sleep 5 &&
+      redis-cli -a bitnami --cluster create
+      172.28.0.2:6379
+      172.28.0.3:6379
+      172.28.0.4:6379
+      172.28.0.5:6379
+      172.28.0.6:6379
+      172.28.0.7:6379
+      --cluster-replicas 1 --cluster-yes"
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+      - redis-node-6
+    networks:
+      - redis-cluster
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis-insight-data:/data
+    depends_on:
+      - redis-node-1
+    networks:
+      - redis-cluster
+
+  demo:
+    image: python:3.11-slim
+    volumes:
+      - ./demo.py:/app/demo.py
+    working_dir: /app
+    command: sh -c "pip install redis --quiet && python demo.py"
+    depends_on:
+      - redis-cluster-init
+    networks:
+      - redis-cluster
+
+networks:
+  redis-cluster:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  redis-data-1:
+  redis-data-2:
+  redis-data-3:
+  redis-data-4:
+  redis-data-5:
+  redis-data-6:
+  redis-insight-data:
